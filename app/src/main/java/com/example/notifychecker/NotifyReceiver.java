@@ -2,13 +2,13 @@ package com.example.notifychecker;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.provider.Settings;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -19,6 +19,8 @@ import androidx.core.graphics.drawable.IconCompat;
 
 import com.example.notifychecker.Common.CommonData;
 import com.example.notifychecker.Common.DemiStaticSetting;
+
+import java.sql.Timestamp;
 
 public class NotifyReceiver extends BroadcastReceiver
 {
@@ -34,35 +36,36 @@ public class NotifyReceiver extends BroadcastReceiver
 
         // 色種別取得・アイコンなどを設定
         int notifyCount = intent.getIntExtra("notify_count",-1);
-        int setColor    = -1;
-        int type        = CommonData.Constant.COLOR_ORANGE;
-        int id          = CommonData.Constant.NOTIFY_ID_OTHER;
+        int setColor;
+        int type;
         Log.d(LogTag, "---- notifyCount= " + notifyCount);
 
         NotificationManagerCompat notmCompatDel = NotificationManagerCompat.from(context);
-        notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_RED);
-        notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_YELLOW);
-        notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_BLUE);
+        notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_MAIN);  // いったんキャンセルする
+
+        boolean isError = false;
 
         // 0件となった場合は通知を行わない(すでに行われている通知はキャンセル済)
         if(notifyCount == 0) { return; }
-        else if(notifyCount >= DemiStaticSetting.Threashold.THREASHOLD_BLUE &&
-                notifyCount < DemiStaticSetting.Threashold.THREASHOLD_YELLOW)
+        // エラー
+        else if(notifyCount < 0)
         {
-            id       = CommonData.Constant.NOTIFY_ID_BLUE;
+            type     = CommonData.Constant.COLOR_ORANGE;
+            setColor = getColor(CommonData.Constant.COLOR_ORANGE);
+            isError  = true;
+        }
+        else if(notifyCount < DemiStaticSetting.Threashold.THREASHOLD_YELLOW)
+        {
             type     = CommonData.Constant.COLOR_BLUE;
             setColor = getColor(CommonData.Constant.COLOR_BLUE);
         }
-        else if(notifyCount >= DemiStaticSetting.Threashold.THREASHOLD_YELLOW &&
-                notifyCount < DemiStaticSetting.Threashold.THREASHOLD_RED)
+        else if(notifyCount < DemiStaticSetting.Threashold.THREASHOLD_RED)
         {
-            id       = CommonData.Constant.NOTIFY_ID_YELLOW;
             type     = CommonData.Constant.COLOR_YELLOW;
             setColor = getColor(CommonData.Constant.COLOR_YELLOW);
         }
         else
         {
-            id       = CommonData.Constant.NOTIFY_ID_RED;
             type     = CommonData.Constant.COLOR_RED;
             setColor = getColor(CommonData.Constant.COLOR_RED);
         }
@@ -77,6 +80,10 @@ public class NotifyReceiver extends BroadcastReceiver
 
         ShortcutManagerCompat.pushDynamicShortcut(context, shortc);
 
+        PendingIntent pi = PendingIntent.getActivity(context, 0,
+                                                     new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"),
+                                                     PendingIntent.FLAG_MUTABLE);
+
         NotificationCompat.Builder bld = new NotificationCompat.Builder(context, CommonData.Constant.CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_andon)
                 .setCategory(Notification.CATEGORY_MESSAGE)
@@ -84,14 +91,25 @@ public class NotifyReceiver extends BroadcastReceiver
                 .setLocusId(new LocusIdCompat("PERSON"))
                 .addPerson(per)
                 .setColor(setColor)
-                .setOngoing(true)
+                .setContentIntent(pi)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         NotificationManagerCompat notmCompat = NotificationManagerCompat.from(context);
         NotificationCompat.MessagingStyle style = new NotificationCompat.MessagingStyle(per).setConversationTitle("情報展開");
-        style.addMessage("未処理の通知が" + notifyCount + "件あります" , 100000000, per).setBuilder(bld);
 
-        notmCompat.notify(id, bld.build());
+        if(isError)
+        {
+            style.addMessage("サービスが正常に動作していません(タップして通知アクセスの設定を有効かしてください)" ,
+                    new Timestamp(0).getTime(), per).setBuilder(bld);
+            bld.setOngoing(true);  // エラーの場合は消せないようにする
+        }
+        else
+        {
+
+            style.addMessage("未処理の通知が" + notifyCount + "件あります(確認後は消去可能です)" ,
+                    new Timestamp(0).getTime(), per).setBuilder(bld);
+        }
+        notmCompat.notify(CommonData.Constant.NOTIFY_ID_MAIN, bld.build());
     }
 
     // 通知のチャンネル登録
@@ -110,7 +128,7 @@ public class NotifyReceiver extends BroadcastReceiver
     // 表示する色に応じたPersonクラス作成
     private androidx.core.app.Person createPersonPerColor(Context context, int type)
     {
-        androidx.core.app.Person per = null;
+        androidx.core.app.Person per;
         // 赤
         if(type == CommonData.Constant.COLOR_RED)
         {
@@ -141,7 +159,7 @@ public class NotifyReceiver extends BroadcastReceiver
         // 今は、障害時その他はオレンジに倒す
         else
         {
-            IconCompat ic = IconCompat.createWithResource(context, R.drawable.ic_andon);
+            IconCompat ic = IconCompat.createWithResource(context, R.mipmap.ic_people_e);
             per = new androidx.core.app.Person.Builder()
                     .setName("橙")
                     .setIcon(ic)
@@ -153,7 +171,7 @@ public class NotifyReceiver extends BroadcastReceiver
     // 色取得
     private int getColor(int type)
     {
-        int col = Color.GRAY;
+        int col;
         // 赤
         if(type == CommonData.Constant.COLOR_RED) { col = Color.RED; }
         // 黄
@@ -161,7 +179,7 @@ public class NotifyReceiver extends BroadcastReceiver
         // 青
         else if(type == CommonData.Constant.COLOR_BLUE) { col = Color.CYAN; }
         // 今は、障害時その他はオレンジに倒す
-        else { col = Color.argb(192, 255, 144, 0); };
+        else { col = Color.argb(192, 255, 144, 0); }
         return col;
     }
 }

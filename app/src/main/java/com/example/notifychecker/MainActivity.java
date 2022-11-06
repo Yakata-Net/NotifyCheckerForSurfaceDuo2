@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     // 初期設定処理
     private  boolean Initialize()
     {
+        boolean ret = true;
         Log.d(LogTag, "---- 権限があるパッケージ一覧 ----");
 
         // 通知アクセス宣言があるアプリを探し、無ければ権限を要求
@@ -45,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
             Log.d(LogTag, "---- 権限がないため、設定 ----");
             DialogFragment permDialog = new PermissionDialog();
             permDialog.show(getSupportFragmentManager(), "DIALOG_PERMISSION");
+
+            ret = false;
         }
 
         // サービスからのブロードキャストレシーバーを設定
@@ -54,13 +57,22 @@ public class MainActivity extends AppCompatActivity {
         ifilter  = new IntentFilter();
         ifilter.addAction("NOTIFY_RECEIVER_INTENT");
         registerReceiver(receiver, ifilter);
-        return true;  // 今のところはTrueのみ。エラーハンドリング実装時に変える。
+        return ret;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        Initialize();
+        boolean result = Initialize();
+
+        // 失敗の場合、エラー表示
+        if(!result)
+        {
+            Intent broad = new Intent();
+            broad.putExtra("notify_count", -1);
+            broad.setAction("NOTIFY_RECEIVER_INTENT");
+            getBaseContext().sendBroadcast(broad);
+        }
     }
 }
