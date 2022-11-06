@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private  boolean Initialize()
     {
         boolean ret = true;
-        Log.d(LogTag, "---- 権限があるパッケージ一覧 ----");
+        Log.d(LogTag, "---- Package of Permitted ----");
 
         // 通知アクセス宣言があるアプリを探し、無ければ権限を要求
         Set<String> s = NotificationManagerCompat.getEnabledListenerPackages(this);
@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
         if(!found)
         {
-            Log.d(LogTag, "---- 権限がないため、設定 ----");
+            Log.d(LogTag, "---- No Permission ----");
             DialogFragment permDialog = new PermissionDialog();
             permDialog.show(getSupportFragmentManager(), "DIALOG_PERMISSION");
 

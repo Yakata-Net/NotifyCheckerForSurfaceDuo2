@@ -88,7 +88,7 @@ public class NotifyListener extends NotificationListenerService
         if (CommonData.Constant.IsSelfNotifyId(notify.getId()))
         {
             Log.d(LogTag,
-                    "---- --> Notification Posted (自身の通知のため無視) ----");
+                    "---- --> Notification Posted (SELF) ----");
             return;
         }
         Log.d(LogTag,
@@ -103,7 +103,7 @@ public class NotifyListener extends NotificationListenerService
         super.onNotificationRemoved(notify);
         if (CommonData.Constant.IsSelfNotifyId(notify.getId())) {
             Log.d(LogTag,
-                    "---- --> Notification Removed (自身の通知のため無視) ----");
+                    "---- --> Notification Removed (SELF) ----");
             return;
         }
         Log.d(LogTag,

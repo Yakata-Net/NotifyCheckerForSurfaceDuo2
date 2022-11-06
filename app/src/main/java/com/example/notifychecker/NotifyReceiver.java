@@ -30,7 +30,7 @@ public class NotifyReceiver extends BroadcastReceiver
     // 通知数監視サービスから通知の変化を受信したときの処理
     public void onReceive(Context context, Intent intent)
     {
-        Log.d(LogTag, "---- レシーバーの通知を受信 ----");
+        Log.d(LogTag, "---- Notification Broadcast Received ----");
         // チャンネル設定
         setChannel(context);
 
@@ -41,12 +41,15 @@ public class NotifyReceiver extends BroadcastReceiver
         Log.d(LogTag, "---- notifyCount= " + notifyCount);
 
         NotificationManagerCompat notmCompatDel = NotificationManagerCompat.from(context);
-        notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_MAIN);  // いったんキャンセルする
 
         boolean isError = false;
 
         // 0件となった場合は通知を行わない(すでに行われている通知はキャンセル済)
-        if(notifyCount == 0) { return; }
+        if(notifyCount == 0)
+        {
+            notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_MAIN);  // いったんキャンセルする
+            return;
+        }
         // エラー
         else if(notifyCount < 0)
         {
@@ -58,16 +61,19 @@ public class NotifyReceiver extends BroadcastReceiver
         {
             type     = CommonData.Constant.COLOR_BLUE;
             setColor = getColor(CommonData.Constant.COLOR_BLUE);
+            notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_MAIN);  // いったんキャンセルする
         }
         else if(notifyCount < DemiStaticSetting.Threashold.THREASHOLD_RED)
         {
             type     = CommonData.Constant.COLOR_YELLOW;
             setColor = getColor(CommonData.Constant.COLOR_YELLOW);
+            notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_MAIN);  // いったんキャンセルする
         }
         else
         {
             type     = CommonData.Constant.COLOR_RED;
             setColor = getColor(CommonData.Constant.COLOR_RED);
+            notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_MAIN);  // いったんキャンセルする
         }
 
         androidx.core.app.Person per = createPersonPerColor(context, type);
@@ -105,7 +111,6 @@ public class NotifyReceiver extends BroadcastReceiver
         }
         else
         {
-
             style.addMessage("未処理の通知が" + notifyCount + "件あります(確認後は消去可能です)" ,
                     new Timestamp(0).getTime(), per).setBuilder(bld);
         }

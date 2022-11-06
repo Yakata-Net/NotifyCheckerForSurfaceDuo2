@@ -21,6 +21,7 @@ public class PermissionDialog extends DialogFragment
                     Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
                     startActivity(intent);
                 })
+                .setNegativeButton("CANCEL", (dialogInterface, id) ->{})
                 // キャンセルされたときの動作はダイアログを閉じた後のMainActivityに任せる
 
                 .create();
