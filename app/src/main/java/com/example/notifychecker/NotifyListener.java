@@ -1,9 +1,8 @@
 package com.example.notifychecker;
 
-import android.app.AlertDialog;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
@@ -11,18 +10,14 @@ import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.LocusIdCompat;
-import androidx.fragment.app.DialogFragment;
-
 import com.example.notifychecker.Common.CommonData;
-import com.example.notifychecker.Common.PermissionDialog;
 
-import java.util.Set;
+import java.sql.Date;
 
 public class NotifyListener extends NotificationListenerService
 {
+    public static Boolean IsRunnig = false;
+    public static Date LatestServiceStart = new Date(0);
     private final String LogTag = "NotifyReceiver:NotifyListener";
 
     // 初期化処理
@@ -31,16 +26,8 @@ public class NotifyListener extends NotificationListenerService
         // チャンネル設定以外は空処理。必要に応じて追加すること
         setChannel(this);
 
-        // サービス自体の通知
-        NotificationCompat.Builder bld = new NotificationCompat.Builder(this, CommonData.Constant.CHANNEL_ID2)
-                .setContentTitle("通知監視")
-                .setContentText("サービスは動作中です")
-                .setSmallIcon(R.drawable.ic_andon)
-                .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-        NotificationManagerCompat notmCompat = NotificationManagerCompat.from(this);
-        notmCompat.notify(CommonData.Constant.NOTIFY_ID_SERVICE, bld.build());
+        IsRunnig = true;
+        LatestServiceStart = new Date(System.currentTimeMillis());
     }
 
     // チャンネル設定
@@ -55,6 +42,7 @@ public class NotifyListener extends NotificationListenerService
         notm.createNotificationChannel(Channel);
     }
 
+    // インスタンス生成時の処理
     @Override
     public void onCreate()
     {
@@ -71,6 +59,17 @@ public class NotifyListener extends NotificationListenerService
         return binder;
     }
 
+    // 開始時の処理
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId)
+    {
+        Log.d(LogTag, "---- Listener Start Command Receive ----");
+
+        // 自動的に再起動する
+        return START_STICKY;
+    }
+
+    // 通知取得可能になったタイミング
     @Override
     public void onListenerConnected()
     {
@@ -81,6 +80,7 @@ public class NotifyListener extends NotificationListenerService
         notifyBroadcast();
     }
 
+    // 通知取得時の処理
     @Override
     public void onNotificationPosted(StatusBarNotification notify)
     {
@@ -97,6 +97,7 @@ public class NotifyListener extends NotificationListenerService
         notifyBroadcast();
     }
 
+    // 通知削除時の処理
     @Override
     public void onNotificationRemoved(StatusBarNotification notify)
     {
@@ -121,23 +122,48 @@ public class NotifyListener extends NotificationListenerService
         Log.d(LogTag,
                 "----       Now Notify Count = ("+ actualNotifyCount + "/" + statusBarNotificationList.length + ") ----");
 
-        Intent broad = new Intent();
-        broad.putExtra("notify_count", actualNotifyCount);
-        broad.setAction("NOTIFY_RECEIVER_INTENT");
-        getBaseContext().sendBroadcast(broad);
+        sendNotifyBroadcast(actualNotifyCount);
     }
 
     // 自身の通知・会話アイコンを除いた数を取得する
     private int getActualNotifyCount(StatusBarNotification[] notifyList)
     {
         int count = 0;
+        // 適切にグループが表示されておらず、イケていないので後から治したい…
         for(StatusBarNotification sbNotify : notifyList)
         {
+            Log.d(LogTag, "Notify: PackageName:" + sbNotify.getPackageName() + ", Id:" + sbNotify.getId());
             if(!CommonData.Constant.IsSelfNotifyId(sbNotify.getId()))
             {
                 count++;
             }
         }
         return count;
+    }
+
+    // Broadcast通知
+    private void sendNotifyBroadcast(int count)
+    {
+        if(count < 0)return;
+
+        Intent broad = new Intent();
+        broad.putExtra("notify_count", count);
+        broad.setAction("NOTIFY_RECEIVER_INTENT");
+        getBaseContext().sendBroadcast(broad);
+    }
+
+    private void sendNotifyErrorBroadcast()
+    {
+        Intent broad = new Intent();
+        broad.putExtra("notify_count", -1);
+        broad.setAction("NOTIFY_RECEIVER_INTENT");
+        getBaseContext().sendBroadcast(broad);
+    }
+
+    @Override
+    public void onDestroy()
+    {
+        IsRunnig = false;
+        sendNotifyErrorBroadcast();
     }
 }

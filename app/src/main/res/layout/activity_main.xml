@@ -8,8 +8,10 @@
 
     <TextView
         android:id="@+id/App_Name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="151dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:text="@string/app_name"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -22,8 +24,64 @@
         android:id="@+id/App_Version"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="4dp"
         android:text="@string/app_ver"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="45dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/App_Name"
+        tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/button_NotifyPermissionSetting"
+        android:layout_width="368dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="23dp"
+        android:onClick="NotifyPermSettingButtonClicked"
+        android:text="@string/button_label_NotifyPermissionSetting"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/service_LatestStartDate"
+        tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/button_NotifyTest"
+        android:layout_width="368dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="23dp"
+        android:onClick="NotifyTestButtonClicked"
+        android:text="@string/button_label_NotifyTest"
+        app:icon="@drawable/ic_andon"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_NotifyPermissionSetting"
+        tools:ignore="MissingConstraints" />
+
+    <TextView
+        android:id="@+id/Service_Status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/text_view_ServiceStatus_Unknown"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/App_Version"
+        tools:ignore="MissingConstraints" />
+
+    <TextView
+        android:id="@+id/service_LatestStartDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="9dp"
+        android:text="@string/text_view_LatestServiceDate"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/Service_Status"
+        tools:ignore="MissingConstraints" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

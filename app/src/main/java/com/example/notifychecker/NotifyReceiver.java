@@ -7,11 +7,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.Person;
 import androidx.core.content.LocusIdCompat;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
@@ -19,25 +21,50 @@ import androidx.core.graphics.drawable.IconCompat;
 
 import com.example.notifychecker.Common.CommonData;
 import com.example.notifychecker.Common.DemiStaticSetting;
+import com.example.notifychecker.Common.NotifyIconColor;
+import com.example.notifychecker.Common.NotifyPerson;
 
 import java.sql.Timestamp;
 
 public class NotifyReceiver extends BroadcastReceiver
 {
     private final String LogTag      = "NotifyReceiver:NotifyReceiver";
+    private NotifyPerson DisplayNotifyPerson;
 
     @Override
     // 通知数監視サービスから通知の変化を受信したときの処理
     public void onReceive(Context context, Intent intent)
     {
         Log.d(LogTag, "---- Notification Broadcast Received ----");
+
         // チャンネル設定
         setChannel(context);
 
+        // テスト・訓練用
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && intent.getAction() == "NOTIFY_TEST_INTENT")
+        {
+            testNotify(context);
+            return;
+        }
+
+        // 共通・インテント設定など
+        PendingIntent pi = PendingIntent.getActivity(context, 0,
+                                new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"),
+                                PendingIntent.FLAG_MUTABLE);
+        ShortcutInfoCompat shortc = new ShortcutInfoCompat.Builder(context, "SHORTCUT_NOUSE")
+                                .setLongLived(true)
+                                .setShortLabel("アンドン")
+                                .setIntent(new Intent(Settings.ACTION_SETTINGS))
+                                .build();
+
+        ShortcutManagerCompat.pushDynamicShortcut(context, shortc);
+
+
         // 色種別取得・アイコンなどを設定
+        DisplayNotifyPerson = new NotifyPerson(context);
+        Person per;
         int notifyCount = intent.getIntExtra("notify_count",-1);
         int setColor;
-        int type;
         Log.d(LogTag, "---- notifyCount= " + notifyCount);
 
         NotificationManagerCompat notmCompatDel = NotificationManagerCompat.from(context);
@@ -53,42 +80,30 @@ public class NotifyReceiver extends BroadcastReceiver
         // エラー
         else if(notifyCount < 0)
         {
-            type     = CommonData.Constant.COLOR_ORANGE;
-            setColor = getColor(CommonData.Constant.COLOR_ORANGE);
+            per = DisplayNotifyPerson.getPerson(CommonData.Constant.COLOR_ORANGE);
+            setColor = NotifyIconColor.GetColor(CommonData.Constant.COLOR_ORANGE);
             isError  = true;
         }
         else if(notifyCount < DemiStaticSetting.Threashold.THREASHOLD_YELLOW)
         {
-            type     = CommonData.Constant.COLOR_BLUE;
-            setColor = getColor(CommonData.Constant.COLOR_BLUE);
-            notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_MAIN);  // いったんキャンセルする
+            per = DisplayNotifyPerson.getPerson(CommonData.Constant.COLOR_BLUE);
+            setColor = NotifyIconColor.GetColor(CommonData.Constant.COLOR_BLUE);
         }
         else if(notifyCount < DemiStaticSetting.Threashold.THREASHOLD_RED)
         {
-            type     = CommonData.Constant.COLOR_YELLOW;
-            setColor = getColor(CommonData.Constant.COLOR_YELLOW);
-            notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_MAIN);  // いったんキャンセルする
+            per = DisplayNotifyPerson.getPerson(CommonData.Constant.COLOR_YELLOW);
+            setColor = NotifyIconColor.GetColor(CommonData.Constant.COLOR_YELLOW);
         }
         else
         {
-            type     = CommonData.Constant.COLOR_RED;
-            setColor = getColor(CommonData.Constant.COLOR_RED);
-            notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_MAIN);  // いったんキャンセルする
+            per = DisplayNotifyPerson.getPerson(CommonData.Constant.COLOR_RED);
+            setColor = NotifyIconColor.GetColor(CommonData.Constant.COLOR_RED);
         }
 
-        androidx.core.app.Person per = createPersonPerColor(context, type);
-
-        ShortcutInfoCompat shortc = new ShortcutInfoCompat.Builder(context, "SHORTCUT_NOUSE")
-                .setLongLived(true)
-                .setShortLabel("アンドン")
-                .setIntent(new Intent(Settings.ACTION_SETTINGS))
-                .build();
-
-        ShortcutManagerCompat.pushDynamicShortcut(context, shortc);
-
-        PendingIntent pi = PendingIntent.getActivity(context, 0,
-                                                     new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"),
-                                                     PendingIntent.FLAG_MUTABLE);
+        if(!isError)
+        {
+            notmCompatDel.cancel(CommonData.Constant.NOTIFY_ID_MAIN);  // エラー以外の場合はいったんキャンセルする
+        }
 
         NotificationCompat.Builder bld = new NotificationCompat.Builder(context, CommonData.Constant.CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_andon)
@@ -130,61 +145,16 @@ public class NotifyReceiver extends BroadcastReceiver
         notm.createNotificationChannel(Channel);
     }
 
-    // 表示する色に応じたPersonクラス作成
-    private androidx.core.app.Person createPersonPerColor(Context context, int type)
+    // 通知のテスト用
+    private void testNotify(Context context)
     {
-        androidx.core.app.Person per;
-        // 赤
-        if(type == CommonData.Constant.COLOR_RED)
-        {
-            IconCompat ic = IconCompat.createWithResource(context, R.mipmap.ic_people_r);
-            per = new androidx.core.app.Person.Builder()
-                    .setName("赤")
-                    .setIcon(ic)
-                    .build();
-        }
-        // 黄
-        else if(type == CommonData.Constant.COLOR_YELLOW)
-        {
-            IconCompat ic = IconCompat.createWithResource(context, R.mipmap.ic_people_y);
-            per = new androidx.core.app.Person.Builder()
-                    .setName("黄")
-                    .setIcon(ic)
-                    .build();
-        }
-        // 青
-        else if(type == CommonData.Constant.COLOR_BLUE)
-        {
-            IconCompat ic = IconCompat.createWithResource(context, R.mipmap.ic_people_b);
-            per = new androidx.core.app.Person.Builder()
-                    .setName("青")
-                    .setIcon(ic)
-                    .build();
-        }
-        // 今は、障害時その他はオレンジに倒す
-        else
-        {
-            IconCompat ic = IconCompat.createWithResource(context, R.mipmap.ic_people_e);
-            per = new androidx.core.app.Person.Builder()
-                    .setName("橙")
-                    .setIcon(ic)
-                    .build();
-        }
-        return per;
-    }
+        NotificationCompat.Builder bld = new NotificationCompat.Builder(context, CommonData.Constant.CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_andon)
+                .setContentTitle("テスト用通知")
+                .setContentText("NotifyCheckerから送信されたテスト用通信です")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
-    // 色取得
-    private int getColor(int type)
-    {
-        int col;
-        // 赤
-        if(type == CommonData.Constant.COLOR_RED) { col = Color.RED; }
-        // 黄
-        else if(type == CommonData.Constant.COLOR_YELLOW) { col = Color.YELLOW; }
-        // 青
-        else if(type == CommonData.Constant.COLOR_BLUE) { col = Color.CYAN; }
-        // 今は、障害時その他はオレンジに倒す
-        else { col = Color.argb(192, 255, 144, 0); }
-        return col;
+        NotificationManagerCompat notmCompat = NotificationManagerCompat.from(context);
+        notmCompat.notify(CommonData.Constant.NOTIFY_ID_TEST, bld.build());
     }
 }

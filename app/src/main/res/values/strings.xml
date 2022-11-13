@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">NotifyChecker</string>
-    <string name="app_ver">0.50</string>
+    <string name="app_ver">0.75</string>
+    <string name="button_label_NotifyPermissionSetting">通知権限の設定</string>
+    <string name="button_label_NotifyTest">テスト通知の送信</string>
+    <string name="text_view_ServiceStatus_On">サービス起動状態:起動中</string>
+    <string name="text_view_ServiceStatus_Off">サービス起動状態:停止中</string>
+    <string name="text_view_LatestServiceDate">最終サービス起動日時:</string>
+    <string name="text_view_ServiceStatus_Unknown">サービス起動状態:取得失敗</string>
+    <string name="text_timer">秒後にテスト通知を送信します</string>
 </resources>
