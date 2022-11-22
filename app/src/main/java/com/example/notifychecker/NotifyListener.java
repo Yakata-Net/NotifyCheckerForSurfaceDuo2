@@ -13,6 +13,8 @@ import android.util.Log;
 import com.example.notifychecker.Common.CommonData;
 
 import java.sql.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class NotifyListener extends NotificationListenerService
 {
@@ -128,15 +130,20 @@ public class NotifyListener extends NotificationListenerService
     // 自身の通知・会話アイコンを除いた数を取得する
     private int getActualNotifyCount(StatusBarNotification[] notifyList)
     {
+        // グループ単位で分ける(Valueはダミーのため使わない)
+        Map<String, Integer> groupMap = new HashMap();
         int count = 0;
-        // 適切にグループが表示されておらず、イケていないので後から治したい…
         for(StatusBarNotification sbNotify : notifyList)
         {
             Log.d(LogTag, "Notify: PackageName:" + sbNotify.getPackageName() + ", Id:" + sbNotify.getId());
             if(!CommonData.Constant.IsSelfNotifyId(sbNotify.getId()))
             {
-                count++;
+                groupMap.put(sbNotify.getGroupKey(), 1);
             }
+        }
+        for(Map.Entry<String, Integer> index: groupMap.entrySet())
+        {
+            count++;
         }
         return count;
     }
