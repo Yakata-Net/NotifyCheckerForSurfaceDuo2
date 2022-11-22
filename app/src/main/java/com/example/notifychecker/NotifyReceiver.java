@@ -120,7 +120,7 @@ public class NotifyReceiver extends BroadcastReceiver
 
         if(isError)
         {
-            style.addMessage("サービスが正常に動作していません(タップして通知アクセスの設定を有効かしてください)" ,
+            style.addMessage("サービスが正常に動作していません(タップして通知アクセスの設定を有効化してください)" ,
                     new Timestamp(0).getTime(), per).setBuilder(bld);
             bld.setOngoing(true);  // エラーの場合は消せないようにする
         }
@@ -151,7 +151,7 @@ public class NotifyReceiver extends BroadcastReceiver
         NotificationCompat.Builder bld = new NotificationCompat.Builder(context, CommonData.Constant.CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_andon)
                 .setContentTitle("テスト用通知")
-                .setContentText("NotifyCheckerから送信されたテスト用通信です")
+                .setContentText("NotifyCheckerから送信されたテスト用通知です")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         NotificationManagerCompat notmCompat = NotificationManagerCompat.from(context);
