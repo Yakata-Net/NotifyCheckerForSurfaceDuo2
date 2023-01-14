@@ -2,13 +2,19 @@
 For Surface Duo2)Display on Glance Bar what notifications not displayed.
 
 # How to install and usage.
-0. Checkout or Clone The repository.
+## Direct install.
+A-0. Export NotifyCheckerForSurfaceDuo2.apk
+(to 3)
 
-1. Open the Project on Android Studio.
-2. Build .apk file.
+## Clone and build.
+B-0. Checkout or Clone The repository.
+
+B-1. Open the Project on Android Studio.
+B-2. Build .apk file.
 
 ![f1](https://user-images.githubusercontent.com/117515489/210479498-8dc79ee1-9fd5-42f6-b2fb-84b44cc95ddb.png)
 
+## Install and setup.
 3. Install The app to your Surface Duo 2.
 
 (4 or 5)
